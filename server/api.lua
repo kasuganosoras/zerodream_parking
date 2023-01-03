@@ -223,7 +223,7 @@ end
 
 -- Is allowed to parking
 -- Args: (number) player, (string) parking, (string) plate
--- Return: boolean
+-- Return: table
 function IsAllowedParking(player, parking, plate)
     -- For Standalone
     return {
@@ -234,7 +234,7 @@ end
 
 -- Is allowed to drive
 -- Args: (number) player, (string) parking, (string) plate
--- Return: boolean
+-- Return: table
 function IsAllowedDrive(player, parking, plate)
     -- For Standalone
     return {
