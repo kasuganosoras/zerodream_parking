@@ -13,7 +13,7 @@ A car parking script for FiveM
 - You can park your car anywhere.
 - Parking fees for player.
 - Custom key binds support.
-- Optimized performance (0.01ms in common, 0.5ms when close to vehicles).
+- Optimized performance (0.01ms in common, 0.05ms when close to vehicles).
 
 ## IMPORTANT
 **!!! CHANGE THE KEY BINDS BEFORE YOU START IT !!!**<br>
