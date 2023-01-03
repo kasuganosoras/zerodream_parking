@@ -50,6 +50,14 @@ git clone https://github.com/kasuganosoras/zerodream_parking
 - Restart your server, the script will automatically create the database table
 - Restart your server again
 
+---
+
+## Custom API
+
+All the code related to the framework or balance system is in the `client/api.lua` and `server/api.lua` file, you can modify it to fit your needs.
+
+By default, I have added the ESX support, you can change the framework type in `config.lua` to `esx` to enable it.
+
 ----
 
 ## Legal
