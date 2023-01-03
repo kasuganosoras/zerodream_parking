@@ -622,8 +622,16 @@ function SetVehicleDamageData(vehicle, damages)
 	local model    = GetEntityModel(vehicle)
 	local min, max = GetModelDimensions(model)
 	local size     = #(max - min) * 40.0
-	local multiple = #(max - min) * 30.0
+	local handling = GetVehicleHandlingFloat(vehicle, "CHandlingData", "fDeformationDamageMult")
+	local multiple = 20.0
 	local num      = 0
+	multipleList = { { k = 0.55, v = 1000.0 }, { k = 0.65, v = 400.0 }, { k = 0.75, v = 200.0 } }
+	for k, v in pairs(multipleList) do
+		if handling < v.k then
+			multiple = v.v
+			break
+		end
+	end
 	for k, v in pairs(damages) do v.pos = vec3(v.pos.x, v.pos.y, v.pos.z) end
 	while true do
 		if not DoesEntityExist(vehicle) then break end

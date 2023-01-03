@@ -14,7 +14,6 @@ end
 -- Args: (number) vehicle, (table) data
 function SetVehicleExtraData(vehicle, data)
     -- For Standalone
-    -- Do nothing
     if data and data.damage then
         SetVehicleDamageData(vehicle, data.damage)
     end

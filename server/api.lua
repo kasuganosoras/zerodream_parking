@@ -169,3 +169,54 @@ function SendNotification(player, message)
         args      = { message }
     })
 end
+
+-- On vehicle stored
+-- Args: (number) player, (string) parking, (string) plate
+function OnVehicleStored(player, parking, plate)
+    -- For ESX
+    if Config.framework == 'esx' then
+        MySQL.Async.execute('UPDATE owned_vehicles SET stored = @stored WHERE owner = @owner AND plate = @plate', {
+            ['@stored'] = 1,
+            ['@owner']  = GetIdentifierById(player),
+            ['@plate']  = plate
+        })
+        return
+    end
+
+    -- For Standalone
+    -- Do nothing
+end
+
+-- On vehicle drive
+-- Args: (number) player, (string) parking, (string) plate
+function OnVehicleDrive(player, parking, plate)
+    -- For ESX
+    if Config.framework == 'esx' then
+        MySQL.Async.execute('UPDATE owned_vehicles SET stored = @stored WHERE owner = @owner AND plate = @plate', {
+            ['@stored'] = 0,
+            ['@owner']  = GetIdentifierById(player),
+            ['@plate']  = plate
+        })
+        return
+    end
+
+    -- For Standalone
+    -- Do nothing
+end
+
+-- On vehicle impounded
+-- Args: (number) player, (string) parking, (string) plate
+function OnVehicleImpounded(player, parking, plate)
+    -- For ESX
+    if Config.framework == 'esx' then
+        MySQL.Async.execute('UPDATE owned_vehicles SET stored = @stored WHERE owner = @owner AND plate = @plate', {
+            ['@stored'] = 0,
+            ['@owner']  = GetIdentifierById(player),
+            ['@plate']  = plate
+        })
+        return
+    end
+
+    -- For Standalone
+    -- Do nothing
+end

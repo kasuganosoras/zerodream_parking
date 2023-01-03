@@ -54,6 +54,7 @@ function ImpoundVehicle(player, plate)
         MySQL.Sync.execute('DELETE FROM parking_vehicles WHERE plate = @plate', {
             ['@plate'] = plate
         })
+        OnVehicleImpounded(player, result[1].parking, result[1].plate)
         TriggerClientEvent('zerodream_parking:removeParkingVehicle', -1, result[1].parking, result[1].plate)
         SendNotification(player, _U('IMPOUND_SUCCESS'))
     else
@@ -182,6 +183,7 @@ RegisterServerCallback('zerodream_parking:saveVehicle', function(source, cb, pay
                     rz = payload.rotation.z,
                 }),
             }, function(rowsChanged)
+                OnVehicleStored(_source, payload.parking, plate)
                 cb({
                     success = true,
                     message = _U('VEHICLE_PARKED_SUCCESS'),
@@ -229,6 +231,7 @@ RegisterServerCallback('zerodream_parking:driveOutVehicle', function(source, cb,
                 MySQL.Async.execute('DELETE FROM parking_vehicles WHERE plate = @plate', {
                     ['@plate'] = plate,
                 }, function(rowsChanged)
+                    OnVehicleDrive(_source, result[1].parking, plate)
                     cb({
                         success = true,
                         message = parkingFee > 0 and _UF('VEHICLE_PAID_SUCCESS', parkingFee) or _U('VEHICLE_TAKE_SUCCESS'),
