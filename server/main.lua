@@ -227,7 +227,7 @@ RegisterServerCallback('zerodream_parking:driveOutVehicle', function(source, cb,
             local parkingCrd  = IsPlayerHaveParkingCard(_source)
             local parkingFee  = parkingCrd and 0 or GetParkingFee(result[1].parking, result[1].time)
             local playerMoney = GetPlayerMoney(_source)
-            local checker     = IsAllowedParking(_source, result[1].parking, result[1].plate)
+            local checker     = IsAllowedDrive(_source, result[1].parking, result[1].plate)
             if checker.allowed then
                 if Config.framework == 'standalone' or IsWhiteListPlayer(result[1].parking, _source) then
                     parkingFee = 0
