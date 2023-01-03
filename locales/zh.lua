@@ -22,5 +22,6 @@ Locales['zh'] = {
     ['VEHICLE_PAID_SUCCESS']   = "你支付了 ~g~$%d~s~ 元，现在你可以把车开走了",
     ['IMPOUND_SUCCESS']        = "已成功扣押该车辆",
     ['STOP_ENGINE_FIRST']      = "你需要先关闭引擎才能停车",
-    ['VEHICLE_INFO']           = "~r~%s~s~\n~y~车主：~s~ %s~s~\n~g~车牌：~s~ %s"
+    ['VEHICLE_INFO']           = "~r~%s~s~\n~y~车主：~s~ %s~s~\n~g~车牌：~s~ %s",
+    ['VEHICLE_IS_MOVING']      = "你不能在车辆正在移动的时候停车",
 }
