@@ -40,6 +40,13 @@ git clone https://github.com/kasuganosoras/zerodream_parking
 - Restart your server, the script will automatically create the database table
 - Restart your server again
 
+## Commands
+
+| name | args | description |
+| ---- | ---- | ----------- |
+| /impound | `<plate>` | Impound a car and remove it from the parking |
+| /findveh | `<plate>` | Find a car by plate number |
+
 ## Custom API
 
 All the code related to the framework or balance system is in the `client/api.lua` and `server/api.lua` file, you can modify it to fit your needs.
