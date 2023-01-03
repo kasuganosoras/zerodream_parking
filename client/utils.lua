@@ -184,9 +184,30 @@ function GetVehicleProperties(vehicle)
 	local customcolor1                 = { r = c1r, g = c1g, b = c1b }
 	local customcolor2                 = { r = c2r, g = c2g, b = c2b }
 	local modExtras                    = {}
+	local windowIntact                 = {}
+	local tyreBurst                    = {}
+	local doorDamage                   = {}
 
 	for i = 0, 14 do
-		table.insert(modExtras, IsVehicleExtraTurnedOn(vehicle, i) and 0 or 1)
+		table.insert(modExtras, IsVehicleExtraTurnedOn(vehicle, i))
+	end
+
+	for i = 0, 7 do
+		table.insert(windowIntact, IsVehicleWindowIntact(vehicle, i))
+	end
+
+	for i = 0, 5 do
+		local complete = IsVehicleTyreBurst(vehicle, i, true)
+		if complete then
+			table.insert(tyreBurst, 2)
+		else
+			local onRim = IsVehicleTyreBurst(vehicle, i, false)
+			table.insert(tyreBurst, onRim and 1 or 0)
+		end
+	end
+
+	for i = 0, 5 do
+		table.insert(doorDamage, IsVehicleDoorDamaged(vehicle, i))
 	end
 
 	return {
@@ -207,6 +228,7 @@ function GetVehicleProperties(vehicle)
 		interiorColor     = GetVehicleInteriorColor(vehicle),
 		wheels            = GetVehicleWheelType(vehicle),
 		windowTint        = GetVehicleWindowTint(vehicle),
+		tyresCanBurst     = GetVehicleTyresCanBurst(vehicle),
 		neonEnabled       = {
 			IsVehicleNeonLightEnabled(vehicle, 0),
 			IsVehicleNeonLightEnabled(vehicle, 1),
@@ -262,6 +284,9 @@ function GetVehicleProperties(vehicle)
 		modWindows        = GetVehicleMod(vehicle, 46),
 		modLivery         = GetVehicleMod(vehicle, 48),
 		modExtras		  = modExtras,
+		windowIntact	  = windowIntact,
+		tyreBurst		  = tyreBurst,
+		doorDamage		  = doorDamage,
 	}
 end
 
@@ -319,6 +344,10 @@ function SetVehicleProperties(vehicle, props)
 
 	if props.windowTint ~= nil then
 		SetVehicleWindowTint(vehicle, props.windowTint)
+	end
+
+	if props.tyresCanBurst ~= nil then
+		SetVehicleTyresCanBurst(vehicle, tonumber(props.tyresCanBurst) == 1 and true or false)
 	end
 
 	if props.neonEnabled ~= nil then
@@ -538,9 +567,99 @@ function SetVehicleProperties(vehicle, props)
 
 	if props.modExtras ~= nil and type(props.modExtras) == 'table' then
 		for k, v in pairs(props.modExtras) do
-			SetVehicleExtra(vehicle, tonumber(k - 1), tonumber(v))
+			SetVehicleExtra(vehicle, tonumber(k - 1), not v)
 		end
 	end
+
+	if props.windowIntact ~= nil and type(props.windowIntact) == 'table' then
+		for k, v in pairs(props.windowIntact) do
+			if not v then
+				SmashVehicleWindow(vehicle, k - 1)
+			end
+		end
+	end
+
+	if props.tyreBurst ~= nil and type(props.tyreBurst) == 'table' then
+		for k, v in pairs(props.tyreBurst) do
+			if v == 1 then
+				SetVehicleTyreBurst(vehicle, k - 1, true, 0.0)
+			elseif v == 2 then
+				SetVehicleTyreBurst(vehicle, k - 1, true, 1000.0)
+			end
+		end
+	end
+
+	if props.doorDamage ~= nil and type(props.doorDamage) == 'table' then
+		for k, v in pairs(props.doorDamage) do
+			if v then
+				SetVehicleDoorBroken(vehicle, k - 1, true)
+			end
+		end
+	end
+end
+
+function GetVehicleDamageData(vehicle)
+	if not vehicle or not DoesEntityExist(vehicle) then
+		return false
+	end
+	local model    = GetEntityModel(vehicle)
+	local min, max = GetModelDimensions(model)
+	local position = GetDamagePositions(min, max)
+	local damages  = {}
+	for k, v in pairs(position) do
+		local damagePos = GetVehicleDeformationAtPos(vehicle, v)
+		if #(damagePos) > 0.05 then
+			table.insert(damages, { pos = v, data = #(damagePos) })
+		end
+	end
+	return damages
+end
+
+function SetVehicleDamageData(vehicle, damages)
+	if not vehicle or not DoesEntityExist(vehicle) or type(damages) ~= 'table' then
+		return
+	end
+	local model    = GetEntityModel(vehicle)
+	local min, max = GetModelDimensions(model)
+	local size     = #(max - min) * 40.0
+	local multiple = #(max - min) * 30.0
+	local num      = 0
+	for k, v in pairs(damages) do v.pos = vec3(v.pos.x, v.pos.y, v.pos.z) end
+	while true do
+		if not DoesEntityExist(vehicle) then break end
+		local find = false
+		for k, v in pairs(damages) do
+			local damagePos = GetVehicleDeformationAtPos(vehicle, v.pos)
+			if #(damagePos) < v.data then
+				local offset = v.pos * 2.0
+				local damage = v.data * multiple
+				SetVehicleDamage(vehicle, offset.x, offset.y, offset.z, damage, size, true)
+				find = true
+			end
+		end
+		num = num + 1
+		if num > 50 then break end
+		Wait(1)
+	end
+end
+
+function GetDamagePositions(min, max)
+	local pos = {
+		x = (max.x - min.x) * 0.5, y = (max.y - min.y) * 0.5,
+		z = (max.z - min.z) * 0.5, h = (max.y - min.y) * 0.5 * 0.5,
+	}
+	return {
+		vec3(-pos.x, pos.y, 0.0),  vec3(-pos.x, pos.y, pos.z),  vec3(0.0, pos.y, 0.0),
+		vec3(0.0, -pos.y, pos.z),  vec3(pos.x, -pos.y, 0.0),    vec3(pos.x, -pos.y, pos.z),
+		vec3(0.0, pos.y, pos.z),   vec3(pos.x, pos.y, 0.0),     vec3(pos.x, pos.y, pos.z),
+		vec3(-pos.x, -pos.y, 0.0), vec3(-pos.x, -pos.y, pos.z), vec3(0.0, -pos.y, 0.0),
+		vec3(-pos.x, pos.h, 0.0),  vec3(-pos.x, pos.h, pos.z),  vec3(0.0, pos.h, 0.0),
+		vec3(0.0, -pos.h, pos.z),  vec3(pos.x, -pos.h, 0.0),    vec3(pos.x, -pos.h, pos.z),
+		vec3(0.0, pos.h, pos.z),   vec3(pos.x, pos.h, 0.0),     vec3(pos.x, pos.h, pos.z),
+		vec3(0.0, 0.0, pos.z),     vec3(pos.x, 0.0, 0.0),       vec3(pos.x, 0.0, pos.z),
+		vec3(-pos.x, 0.0, 0.0),    vec3(-pos.x, 0.0, pos.z),    vec3(0.0, 0.0, 0.0),
+		vec3(-pos.x, -pos.h, 0.0), vec3(-pos.x, -pos.h, pos.z), vec3(0.0, -pos.h, 0.0),
+	}
 end
 
 RegisterNetEvent("zerodream_parking:triggerServerCallback")

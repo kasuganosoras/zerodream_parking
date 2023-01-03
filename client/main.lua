@@ -53,14 +53,15 @@ function CreateParkingCar(payload)
         SetVehicleDoorsLockedForAllPlayers(vehicle, true)
         SetVehicleUndriveable(vehicle, true)
     end
-    if payload.data then
-        SetVehicleExtraData(vehicle, payload.data)
-    end
     SetVehicleProperties(vehicle, payload.props)
     SetVehicleEngineOn(vehicle, false, false, false)
     SetEntityAsMissionEntity(vehicle, true, true)
     SetModelAsNoLongerNeeded(model)
+    SetEntityInvincible(vehicle, true)
     FreezeEntityPosition(vehicle, true)
+    if payload.data then
+        SetVehicleExtraData(vehicle, payload.data)
+    end
     return vehicle
 end
 
@@ -107,6 +108,9 @@ function ProcessCarLoading()
                         vehicle.entity = CreateParkingCar(vehicle)
                         DebugPrint("Creating vehicle for " .. vehicle.plate .. " result " .. tostring(vehicle.entity))
                         Wait(200)
+                    else
+                        SetEntityCoordsNoOffset(vehicle.entity, vehicle.position)
+                        SetEntityRotation(vehicle.entity, vehicle.rotation, 2, true)
                     end
                 else
                     if vehicle.entity then
@@ -161,6 +165,13 @@ function ParkingAction(parkingName, vehicle)
                         SetEntityCompletelyDisableCollision(vehicle, true, false)
                         NetworkFadeOutEntity(vehicle, false, false)
                         Wait(500)
+                        if _g.parkingVehicles[parkingName] and _g.parkingVehicles[parkingName][payload.plate] then
+                            local parkingTemp = _g.parkingVehicles[parkingName][payload.plate]
+                            if parkingTemp.entity and DoesEntityExist(parkingTemp.entity) then
+                                CopyVehicleDamages(vehicle, parkingTemp.entity)
+                            end
+                        end
+                        Wait(100)
                         DeleteEntity(vehicle)
                     end
                 end, payload)
@@ -185,6 +196,8 @@ function ParkingAction(parkingName, vehicle)
                 SetVehicleDoorsLocked(vehicle, 0)
                 SetVehicleDoorsLockedForAllPlayers(vehicle, false)
                 SetVehicleUndriveable(vehicle, false)
+                _g.ignoreEntity = NetworkGetNetworkIdFromEntity(vehicle)
+                TriggerLatentServerEvent('zerodream_parking:syncDamage', 1024000, _g.ignoreEntity, GetVehicleDamageData(vehicle))
             end
             SendNotification(result.message)
         end, GetVehicleNumberPlateText(vehicle))
@@ -205,6 +218,7 @@ function ParkingVehicle()
             if DoesEntityExist(vehicle) and GetPedInVehicleSeat(vehicle, -1) == playerPed then
                 ParkingAction(parkingName, vehicle)
             else
+                _g.requestPending = false
                 SendNotification(_U('NOT_IN_DRIVER_SEAT'))
             end
         else
@@ -257,6 +271,18 @@ AddEventHandler('zerodream_parking:removeParkingVehicle', function(parking, plat
             end
         end
         _g.parkingVehicles[parking][plate] = nil
+    end
+end)
+
+RegisterNetEvent('zerodream_parking:syncDamage')
+AddEventHandler('zerodream_parking:syncDamage', function(vehicle, damageData)
+    if _g.ignoreEntity and _g.ignoreEntity == vehicle then
+        _g.ignoreEntity = nil
+        return
+    end
+    vehicle = NetworkGetEntityFromNetworkId(vehicle)
+    if DoesEntityExist(vehicle) then
+        SetVehicleDamageData(vehicle, damageData)
     end
 end)
 

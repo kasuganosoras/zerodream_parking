@@ -101,6 +101,11 @@ AddEventHandler('zerodream_parking:ready', function()
     TriggerLatentClientEvent('zerodream_parking:syncParkingVehicles', _source, 1024000, os.time(), vehicles)
 end)
 
+RegisterServerEvent('zerodream_parking:syncDamage')
+AddEventHandler('zerodream_parking:syncDamage', function(netId, damage)
+    TriggerLatentClientEvent('zerodream_parking:syncDamage', -1, 1024000, netId, damage)
+end)
+
 RegisterServerCallback('zerodream_parking:findVehicle', function(source, cb, plate)
     local _source    = source
     local identifier = GetIdentifierById(_source)
@@ -130,69 +135,76 @@ end)
 RegisterServerCallback('zerodream_parking:saveVehicle', function(source, cb, payload)
     local _source = source
     local plate   = payload.plate
-    local result  = MySQL.Sync.fetchAll('SELECT * FROM parking_vehicles WHERE plate = @plate', {
-        ['@plate'] = plate
-    })
-    -- Check if already in parking
-    if type(result) == 'table' and result[1] ~= nil then
-        cb({
-            success = false,
-            message = _U('VEHICLE_ALREADY_PARKED'),
+    if plate then
+        local result  = MySQL.Sync.fetchAll('SELECT * FROM parking_vehicles WHERE plate = @plate', {
+            ['@plate'] = plate
         })
-    -- Check is allowed vehicle
-    elseif not IsAllowType(payload.parking, payload.class) or IsBlackListCar(payload.parking, payload.model) then
-        cb({
-            success = false,
-            message = _U('VEHICLE_NOT_ALLOWED'),
-        })
-    -- Check is owned vehicle
-    elseif not Config.notOwnedCar and not IsOwnedVehicle(_source, plate) then
-        cb({
-            success = false,
-            message = _U('VEHICLE_NOT_OWNED'),
-        })
-    -- Check is parking full
-    elseif GetVehiclesInParking(payload.parking, true) >= GetMaxParkingVehicles(payload.parking) then
-        cb({
-            success = false,
-            message = _U('ERROR_PARKING_FULL'),
-        })
-    -- Pass the test, storage to database
-    else
-        MySQL.Async.execute('INSERT INTO parking_vehicles (plate, owner, name, position, properties, data, time, parking) VALUES (@plate, @owner, @name, @position, @properties, @data, @time, @parking)', {
-            ['@plate']      = plate,
-            ['@owner']      = GetIdentifierById(_source),
-            ['@name']       = GetPlayerNickname(_source),
-            ['@properties'] = json.encode(payload.props),
-            ['@data']       = json.encode(payload.data),
-            ['@time']       = os.time(),
-            ['@parking']    = payload.parking,
-            ['@position']   = json.encode({
-                x  = payload.position.x,
-                y  = payload.position.y,
-                z  = payload.position.z,
-                rx = payload.rotation.x,
-                ry = payload.rotation.y,
-                rz = payload.rotation.z,
-            }),
-        }, function(rowsChanged)
+        -- Check if already in parking
+        if type(result) == 'table' and result[1] ~= nil then
             cb({
-                success = true,
-                message = _U('VEHICLE_PARKED_SUCCESS'),
+                success = false,
+                message = _U('VEHICLE_ALREADY_PARKED'),
             })
-            -- Notify all clients
-            TriggerLatentClientEvent('zerodream_parking:addParkingVehicle', -1, 1024000, payload.parking, plate, {
-                plate    = plate,
-                owner    = GetIdentifierById(_source),
-                name     = GetPlayerNickname(_source),
-                position = payload.position,
-                rotation = payload.rotation,
-                props    = payload.props,
-                data     = payload.data,
-                time     = os.time(),
-                parking  = payload.parking,
+        -- Check is allowed vehicle
+        elseif not IsAllowType(payload.parking, payload.class) or IsBlackListCar(payload.parking, payload.model) then
+            cb({
+                success = false,
+                message = _U('VEHICLE_NOT_ALLOWED'),
             })
-        end)
+        -- Check is owned vehicle
+        elseif not Config.notOwnedCar and not IsOwnedVehicle(_source, plate) then
+            cb({
+                success = false,
+                message = _U('VEHICLE_NOT_OWNED'),
+            })
+        -- Check is parking full
+        elseif GetVehiclesInParking(payload.parking, true) >= GetMaxParkingVehicles(payload.parking) then
+            cb({
+                success = false,
+                message = _U('ERROR_PARKING_FULL'),
+            })
+        -- Pass the test, storage to database
+        else
+            MySQL.Async.execute('INSERT INTO parking_vehicles (plate, owner, name, position, properties, data, time, parking) VALUES (@plate, @owner, @name, @position, @properties, @data, @time, @parking)', {
+                ['@plate']      = plate,
+                ['@owner']      = GetIdentifierById(_source),
+                ['@name']       = GetPlayerNickname(_source),
+                ['@properties'] = json.encode(payload.props),
+                ['@data']       = json.encode(payload.data),
+                ['@time']       = os.time(),
+                ['@parking']    = payload.parking,
+                ['@position']   = json.encode({
+                    x  = payload.position.x,
+                    y  = payload.position.y,
+                    z  = payload.position.z,
+                    rx = payload.rotation.x,
+                    ry = payload.rotation.y,
+                    rz = payload.rotation.z,
+                }),
+            }, function(rowsChanged)
+                cb({
+                    success = true,
+                    message = _U('VEHICLE_PARKED_SUCCESS'),
+                })
+                -- Notify all clients
+                TriggerLatentClientEvent('zerodream_parking:addParkingVehicle', -1, 1024000, payload.parking, plate, {
+                    plate    = plate,
+                    owner    = GetIdentifierById(_source),
+                    name     = GetPlayerNickname(_source),
+                    position = payload.position,
+                    rotation = payload.rotation,
+                    props    = payload.props,
+                    data     = payload.data,
+                    time     = os.time(),
+                    parking  = payload.parking,
+                })
+            end)
+        end
+    else
+        cb({
+            success = false,
+            message = "INTERNAL_ERROR",
+        })
     end
 end)
 

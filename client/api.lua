@@ -5,7 +5,9 @@
 -- Return: table
 function GetVehicleExtraData(vehicle)
     -- For Standalone
-    return {}
+    return {
+        damage = GetVehicleDamageData(vehicle),
+    }
 end
 
 -- Set vehicle extra data
@@ -13,6 +15,9 @@ end
 function SetVehicleExtraData(vehicle, data)
     -- For Standalone
     -- Do nothing
+    if data and data.damage then
+        SetVehicleDamageData(vehicle, data.damage)
+    end
 end
 
 -- Send notification to player

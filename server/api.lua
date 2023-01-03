@@ -79,7 +79,9 @@ function GetIdentifierById(player)
     -- For ESX
     if Config.framework == 'esx' then
         local xPlayer = _g.ESX.GetPlayerFromId(player)
-        return xPlayer.identifier
+        if xPlayer and xPlayer.identifier then
+            return xPlayer.identifier
+        end
     end
 
     -- For Standalone
