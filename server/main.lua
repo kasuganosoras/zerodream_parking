@@ -136,6 +136,7 @@ end)
 RegisterServerCallback('zerodream_parking:saveVehicle', function(source, cb, payload)
     local _source = source
     local plate   = payload.plate
+    local checker = IsAllowedParking(_source, payload.parking, plate)
     if plate then
         local result  = MySQL.Sync.fetchAll('SELECT * FROM parking_vehicles WHERE plate = @plate', {
             ['@plate'] = plate
@@ -163,6 +164,11 @@ RegisterServerCallback('zerodream_parking:saveVehicle', function(source, cb, pay
             cb({
                 success = false,
                 message = _U('ERROR_PARKING_FULL'),
+            })
+        elseif not checker.allowed then
+            cb({
+                success = false,
+                message = checker.message,
             })
         -- Pass the test, storage to database
         else
@@ -221,28 +227,36 @@ RegisterServerCallback('zerodream_parking:driveOutVehicle', function(source, cb,
             local parkingCrd  = IsPlayerHaveParkingCard(_source)
             local parkingFee  = parkingCrd and 0 or GetParkingFee(result[1].parking, result[1].time)
             local playerMoney = GetPlayerMoney(_source)
-            if Config.framework == 'standalone' or IsWhiteListPlayer(result[1].parking, _source) then
-                parkingFee = 0
-            end
-            if playerMoney >= parkingFee then
-                if parkingFee > 0 then
-                    RemovePlayerMoney(_source, parkingFee)
+            local checker     = IsAllowedParking(_source, result[1].parking, result[1].plate)
+            if checker.allowed then
+                if Config.framework == 'standalone' or IsWhiteListPlayer(result[1].parking, _source) then
+                    parkingFee = 0
                 end
-                MySQL.Async.execute('DELETE FROM parking_vehicles WHERE plate = @plate', {
-                    ['@plate'] = plate,
-                }, function(rowsChanged)
-                    OnVehicleDrive(_source, result[1].parking, plate)
+                if playerMoney >= parkingFee then
+                    if parkingFee > 0 then
+                        RemovePlayerMoney(_source, parkingFee)
+                    end
+                    MySQL.Async.execute('DELETE FROM parking_vehicles WHERE plate = @plate', {
+                        ['@plate'] = plate,
+                    }, function(rowsChanged)
+                        OnVehicleDrive(_source, result[1].parking, plate)
+                        cb({
+                            success = true,
+                            message = parkingFee > 0 and _UF('VEHICLE_PAID_SUCCESS', parkingFee) or _U('VEHICLE_TAKE_SUCCESS'),
+                        })
+                        -- Notify all clients
+                        TriggerLatentClientEvent('zerodream_parking:removeParkingVehicle', -1, 1024000, result[1].parking, plate)
+                    end)
+                else
                     cb({
-                        success = true,
-                        message = parkingFee > 0 and _UF('VEHICLE_PAID_SUCCESS', parkingFee) or _U('VEHICLE_TAKE_SUCCESS'),
+                        success = false,
+                        message = _UF('NOT_ENOUGH_MONEY', parkingFee),
                     })
-                    -- Notify all clients
-                    TriggerLatentClientEvent('zerodream_parking:removeParkingVehicle', -1, 1024000, result[1].parking, plate)
-                end)
+                end
             else
                 cb({
                     success = false,
-                    message = _UF('NOT_ENOUGH_MONEY', parkingFee),
+                    message = checker.message,
                 })
             end
         else

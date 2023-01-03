@@ -1,8 +1,11 @@
 fx_version  'cerulean'
 games       { 'gta5' }
+
+name        'zerodream_parking'
 author      'Akkariin'
 description 'ZeroDream Parking Script'
-version     '1.0.0'
+version     '1.0.1'
+url         'https://www.zerodream.net/'
 
 shared_scripts {
     'config.lua',

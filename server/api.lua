@@ -220,3 +220,25 @@ function OnVehicleImpounded(player, parking, plate)
     -- For Standalone
     -- Do nothing
 end
+
+-- Is allowed to parking
+-- Args: (number) player, (string) parking, (string) plate
+-- Return: boolean
+function IsAllowedParking(player, parking, plate)
+    -- For Standalone
+    return {
+        allowed = true,
+        message = ''
+    }
+end
+
+-- Is allowed to drive
+-- Args: (number) player, (string) parking, (string) plate
+-- Return: boolean
+function IsAllowedDrive(player, parking, plate)
+    -- For Standalone
+    return {
+        allowed = true,
+        message = ''
+    }
+end
