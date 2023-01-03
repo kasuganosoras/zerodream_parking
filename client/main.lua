@@ -67,6 +67,11 @@ end
 function ProcessParking()
     local playerPed = GetPlayerPed(-1)
     local playerCrd = GetEntityCoords(playerPed)
+    _g.isOnVehicle  = IsPedInAnyVehicle(playerPed, false)
+    _g.driveVehicle = _g.isOnVehicle  and GetVehiclePedIsIn(playerPed, false) or nil
+    _g.isEngineOn   = _g.isOnVehicle  and GetIsVehicleEngineRunning(_g.driveVehicle) or false
+    _g.isParkingCar = _g.isOnVehicle  and IsParkingVehicle(_g.driveVehicle) or false
+    _g.parkingCar   = _g.isParkingCar and GetCurrentParkingCar() or nil
     if not Config.globalParking.enable then
         local findParking = false
         for id, parking in pairs(Config.parking) do
@@ -83,10 +88,6 @@ function ProcessParking()
                 Wait(1000)
             end
         end
-        _g.isOnVehicle  = IsPedInAnyVehicle(playerPed, false)
-        _g.driveVehicle = _g.isOnVehicle and GetVehiclePedIsIn(playerPed, false) or nil
-        _g.isEngineOn   = _g.isOnVehicle and GetIsVehicleEngineRunning(_g.driveVehicle) or false
-        _g.isParkingCar = _g.isOnVehicle and IsParkingVehicle(_g.driveVehicle) or false
     end
     playerPed, playerCrd = nil, nil, nil, nil
 end
@@ -132,58 +133,87 @@ function ProcessCarLoading()
     end
 end
 
-function ParkingVehicle()
+function ParkingAction(parkingName, vehicle)
     local playerPed = GetPlayerPed(-1)
+    local playerCrd = GetEntityCoords(playerPed)
+    if not IsParkingVehicle(vehicle) then
+        if not Config.stopEngine or not GetIsVehicleEngineRunning(vehicle) then
+            if GetEntitySpeed(vehicle) < 1 then
+                if IsPedInAnyVehicle(playerPed, false) then
+                    TaskLeaveAnyVehicle(playerPed, 0, 0)
+                end
+                Citizen.Wait(1800)
+                local payload = {
+                    model     = GetEntityModel(vehicle),
+                    class     = GetVehicleClass(vehicle),
+                    plate     = GetVehicleNumberPlateText(vehicle),
+                    props     = GetVehicleProperties(vehicle),
+                    position  = GetEntityCoords(vehicle),
+                    rotation  = GetEntityRotation(vehicle, 2),
+                    data      = GetVehicleExtraData(vehicle),
+                    parking   = parkingName,
+                }
+                TriggerServerCallback('zerodream_parking:saveVehicle', function(result)
+                    _g.requestPending = false
+                    SendNotification(result.message)
+                    if result.success then
+                        FreezeEntityPosition(vehicle, true)
+                        SetEntityCompletelyDisableCollision(vehicle, true, false)
+                        NetworkFadeOutEntity(vehicle, false, false)
+                        Wait(500)
+                        DeleteEntity(vehicle)
+                    end
+                end, payload)
+            else
+                _g.requestPending = false
+                SendNotification(_U('VEHICLE_IS_MOVING'))
+            end
+        else
+            _g.requestPending = false
+            SendNotification(_U('STOP_ENGINE_FIRST'))
+        end
+    else
+        TriggerServerCallback('zerodream_parking:driveOutVehicle', function(result)
+            _g.requestPending = false
+            if result.success then
+                while not NetworkGetEntityIsNetworked(vehicle) do
+                    NetworkRegisterEntityAsNetworked(vehicle)
+                    Citizen.Wait(100)
+                end
+                FreezeEntityPosition(vehicle, false)
+                SetEntityInvincible(vehicle, false)
+                SetVehicleDoorsLocked(vehicle, 0)
+                SetVehicleDoorsLockedForAllPlayers(vehicle, false)
+                SetVehicleUndriveable(vehicle, false)
+            end
+            SendNotification(result.message)
+        end, GetVehicleNumberPlateText(vehicle))
+    end
+end
+
+function ParkingVehicle()
+    if _g.requestPending then
+        return
+    end
+    _g.requestPending = true
+    local playerPed = GetPlayerPed(-1)
+    local playerCrd = GetEntityCoords(playerPed)
     if Config.globalParking.enable or _g.currentParking then
         local parkingName = Config.globalParking.enable and 'global' or _g.currentParking
         if IsPedInAnyVehicle(playerPed, false) then
             local vehicle = GetVehiclePedIsIn(playerPed, false)
             if DoesEntityExist(vehicle) and GetPedInVehicleSeat(vehicle, -1) == playerPed then
-                if not IsParkingVehicle(vehicle) then
-                    if not Config.stopEngine or not GetIsVehicleEngineRunning(vehicle) then
-                        TaskLeaveAnyVehicle(playerPed, 0, 0)
-                        Citizen.Wait(1800)
-                        local payload = {
-                            model     = GetEntityModel(vehicle),
-                            class     = GetVehicleClass(vehicle),
-                            plate     = GetVehicleNumberPlateText(vehicle),
-                            props     = GetVehicleProperties(vehicle),
-                            position  = GetEntityCoords(vehicle),
-                            rotation  = GetEntityRotation(vehicle, 2),
-                            data      = GetVehicleExtraData(vehicle),
-                            parking   = parkingName,
-                        }
-                        TriggerServerCallback('zerodream_parking:saveVehicle', function(result)
-                            SendNotification(result.message)
-                            if result.success then
-                                FreezeEntityPosition(vehicle, true)
-                                SetEntityCompletelyDisableCollision(vehicle, true, false)
-                                NetworkFadeOutEntity(vehicle, false, false)
-                                Wait(500)
-                                DeleteEntity(vehicle)
-                            end
-                        end, payload)
-                    else
-                        SendNotification(_U('STOP_ENGINE_FIRST'))
-                    end
-                else
-                    TriggerServerCallback('zerodream_parking:driveOutVehicle', function(result)
-                        if result.success then
-                            while not NetworkGetEntityIsNetworked(vehicle) do
-                                NetworkRegisterEntityAsNetworked(vehicle)
-                                Citizen.Wait(100)
-                            end
-                            FreezeEntityPosition(vehicle, false)
-                            SetEntityInvincible(vehicle, false)
-                            SetVehicleDoorsLocked(vehicle, 0)
-                            SetVehicleDoorsLockedForAllPlayers(vehicle, false)
-                            SetVehicleUndriveable(vehicle, false)
-                        end
-                        SendNotification(result.message)
-                    end, GetVehicleNumberPlateText(vehicle))
-                end
+                ParkingAction(parkingName, vehicle)
             else
                 SendNotification(_U('NOT_IN_DRIVER_SEAT'))
+            end
+        else
+            local closeVeh = GetClosestVehicle(playerCrd.x, playerCrd.y, playerCrd.z, 3.0, 0, 127)
+            if closeVeh and DoesEntityExist(closeVeh) then
+                _g.ignoreRemove = closeVeh
+                PlayKeyAnim(closeVeh)
+                QuickVehicleHorn(closeVeh, 2)
+                ParkingAction(parkingName, closeVeh)
             end
         end
     end
@@ -199,8 +229,10 @@ function FindVehicle(plate)
 end
 
 RegisterNetEvent('zerodream_parking:syncParkingVehicles')
-AddEventHandler('zerodream_parking:syncParkingVehicles', function(vehicles)
+AddEventHandler('zerodream_parking:syncParkingVehicles', function(serverTime, vehicles)
     DebugPrint('Received parking vehicles list')
+    _g.reciveTime = GetGameTimer()
+    _g.serverTime = serverTime
     _g.parkingVehicles = vehicles
 end)
 
@@ -218,7 +250,10 @@ AddEventHandler('zerodream_parking:removeParkingVehicle', function(parking, plat
         local vehicle = GetVehiclePedIsIn(GetPlayerPed(-1), false)
         if not DoesEntityExist(vehicle) or GetVehicleNumberPlateText(vehicle) ~= plate then
             if _g.parkingVehicles[parking][plate] and _g.parkingVehicles[parking][plate].entity then
-                DeleteEntity(_g.parkingVehicles[parking][plate].entity)
+                if not _g.ignoreRemove or _g.ignoreRemove ~= _g.parkingVehicles[parking][plate].entity then
+                    DeleteEntity(_g.parkingVehicles[parking][plate].entity)
+                    _g.ignoreRemove = nil
+                end
             end
         end
         _g.parkingVehicles[parking][plate] = nil
@@ -306,18 +341,30 @@ Citizen.CreateThread(function()
                             end
                         end
                     else
-                        DisplayHelpText(_UF('PRESS_TO_TAKE_VEHICLE', parkingKey))
+                        local parkFees = GetParkingFeeByCar(_g.parkingCar)
+                        if parkFees > 0 then
+                            DisplayHelpText(_UF('PRESS_TO_PAY_PARK_FEE', parkingKey, parkFees))
+                        else
+                            DisplayHelpText(_UF('PRESS_TO_TAKE_VEHICLE', parkingKey))
+                        end
                     end
                 end
             else
                 Wait(500)
             end
-        end
-        if _g.closeVehicle then
-            local position = _g.closeVehicle.position
-            local vehNames = GetLabelText(GetDisplayNameFromVehicleModel(_g.closeVehicle.props.model))
+        elseif _g.isOnVehicle and _g.isParkingCar then
+            local parkFees = GetParkingFeeByCar(_g.parkingCar)
+            if parkFees > 0 then
+                DisplayHelpText(_UF('PRESS_TO_PAY_PARK_FEE', parkingKey, parkFees))
+            else
+                DisplayHelpText(_UF('PRESS_TO_TAKE_VEHICLE', parkingKey))
+            end
+        elseif not _g.isOnVehicle and _g.closeVehicle then
+            local position  = _g.closeVehicle.position
+            local vehNames  = GetLabelText(GetDisplayNameFromVehicleModel(_g.closeVehicle.props.model))
             local ownerName = _g.closeVehicle.name
-            AdvancedDrawText3D(position, _UF('VEHICLE_INFO', vehNames, ownerName, _g.closeVehicle.plate))
+            local parkFees  = GetParkingFeeByCar(_g.closeVehicle)
+            AdvancedDrawText3D(position, _UF('VEHICLE_INFO', vehNames, ownerName, _g.closeVehicle.plate, parkFees))
         end
     end
 end)

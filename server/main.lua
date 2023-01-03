@@ -98,7 +98,7 @@ AddEventHandler('zerodream_parking:ready', function()
             }
         end
     end
-    TriggerLatentClientEvent('zerodream_parking:syncParkingVehicles', _source, 1024000, vehicles)
+    TriggerLatentClientEvent('zerodream_parking:syncParkingVehicles', _source, 1024000, os.time(), vehicles)
 end)
 
 RegisterServerCallback('zerodream_parking:findVehicle', function(source, cb, plate)

@@ -28,13 +28,13 @@ end
 function DateToTimestamp(y, m, d, h, i, s)
     local time = 0
     if y then
-        time = time + y * 31536000
+        time = time + (y - 1970) * 31556926
     end
     if m then
-        time = time + m * 2592000
+        time = time + (m - 1) * 2629743
     end
     if d then
-        time = time + d * 86400
+        time = time + (d - 1) * 86400
     end
     if h then
         time = time + h * 3600
@@ -45,7 +45,76 @@ function DateToTimestamp(y, m, d, h, i, s)
     if s then
         time = time + s
     end
-    return time
+    return math.ceil(time) - 14678
+end
+
+function GetCurrentParkingCar()
+    local playerPed = GetPlayerPed(-1)
+    local playerVeh = GetVehiclePedIsIn(playerPed, false)
+    local vehPlate  = GetVehicleNumberPlateText(playerVeh)
+    if _g.parkingVehicles then
+        for id, vehicles in pairs(_g.parkingVehicles) do
+            for plate, data in pairs(vehicles) do
+                if plate == vehPlate then
+                    return data
+                end
+            end
+        end
+    end
+    return nil
+end
+
+function QuickVehicleHorn(vehicle, num)
+    for i = 1, num do
+        local timer = GetGameTimer()
+        while GetGameTimer() - timer < 50 do
+            SoundVehicleHornThisFrame(vehicle)
+            Citizen.Wait(0)
+        end
+        Citizen.Wait(50)
+    end
+end
+
+function PlayKeyAnim(vehicle)
+    local playerPed = GetPlayerPed(-1)
+    if playerPed and not IsEntityDead(playerPed) and not IsPedInAnyVehicle(playerPed) then
+        local modelHash = GetHashKey("p_car_keys_01")
+        RequestModel(modelHash)
+        while not HasModelLoaded(modelHash) do
+            Citizen.Wait(0)
+        end
+        local keyObject = CreateObject(modelHash, GetEntityCoords(playerPed), true, true, true)
+        AttachEntityToEntity(keyObject, playerPed, GetPedBoneIndex(playerPed, 57005), 0.09, 0.03, -0.02, -76.0, 13.0, 28.0, false, true, true, true, 0, true)
+        SetModelAsNoLongerNeeded(modelHash)
+        ClearPedTasks(playerPed)
+        SetCurrentPedWeapon(playerPed, GetHashKey("WEAPON_UNARMED"), true)
+        TaskTurnPedToFaceEntity(playerPed, vehicle, 500)
+        local animDict = "anim@mp_player_intmenu@key_fob@"
+        RequestAnimDict(animDict)
+        while not HasAnimDictLoaded(animDict) do
+            Citizen.Wait(0)
+        end
+        TaskPlayAnim(playerPed, animDict, "fob_click", 3.0, 1000, 51)
+        PlaySoundFromEntity(-1, "Remote_Control_Fob", playerPed, "PI_Menu_Sounds", true, 0)
+        Wait(1250)
+        DetachEntity(keyObject, true, true)
+        DeleteObject(keyObject)
+        RemoveAnimDict(animDict)
+        ClearPedTasksImmediately(playerPed)
+    end
+end
+
+function GetParkingFeeByCar(data)
+    if not data then return 0 end
+    local localTime = _g.serverTime + math.floor((GetGameTimer() - _g.reciveTime) / 1000)
+    local feeCalc   = Config.globalParking.enable and Config.globalParking.parkingFee or Config.parking[data.parking].parkingFee
+    local parkFees  = math.ceil(((localTime - data.time) / 86400) * feeCalc)
+    return parkFees
+end
+
+function GetCurrentTimestamp()
+    local year, month, day, hour, minute, second = GetLocalTime()
+    return DateToTimestamp(year, month, day, hour, minute, second)
 end
 
 -- Get key mapping

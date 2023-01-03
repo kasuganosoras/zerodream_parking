@@ -4,6 +4,7 @@ Locales['zh'] = {
     ['PRESS_TO_SAVE_VEHICLE']  = "按下 %s 来保存你的车辆",
     ['PRESS_TO_TAKE_VEHICLE']  = "按下 %s 来驾驶你的车辆",
     ['PRESS_TO_STOP_ENGINE']   = "按下 %s 关闭车辆引擎",
+    ['PRESS_TO_PAY_PARK_FEE']  = "按下 %s 来支付 ~g~$%s~s~ 元停车费",
     ['IMPOUND_INVALID_ARGS']   = "无效的命令，请使用 /impound <车牌号>",
     ['NOT_ALLOWED_PERMISSION'] = "你没有权限使用此命令",
     ['KEY_ENGINE_CONTROL']     = "用于控制引擎开启或关闭",
@@ -22,5 +23,6 @@ Locales['zh'] = {
     ['VEHICLE_PAID_SUCCESS']   = "你支付了 ~g~$%d~s~ 元，现在你可以把车开走了",
     ['IMPOUND_SUCCESS']        = "已成功扣押该车辆",
     ['STOP_ENGINE_FIRST']      = "你需要先关闭引擎才能停车",
-    ['VEHICLE_INFO']           = "~r~%s~s~\n~y~车主：~s~ %s~s~\n~g~车牌：~s~ %s"
+    ['VEHICLE_INFO']           = "~r~%s~s~\n~y~车主：~s~ %s~s~\n~g~车牌：~s~ %s\n~b~停车费：~s~$%s~s~",
+    ['VEHICLE_IS_MOVING']      = "你不能在车辆正在移动的时候停车",
 }

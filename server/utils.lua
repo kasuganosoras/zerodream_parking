@@ -109,3 +109,15 @@ function IsInTable(table, value)
     end
     return false
 end
+
+function TimestampToDate(timestamp)
+    local date = os.date('*t', timestamp)
+    return {
+        y = date.year,
+        m = date.month,
+        d = date.day,
+        h = date.hour,
+        i = date.min,
+        s = date.sec
+    }
+end

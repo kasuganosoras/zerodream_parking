@@ -4,6 +4,7 @@ Locales['en'] = {
     ['PRESS_TO_SAVE_VEHICLE']  = "Press %s to save your vehicle",
     ['PRESS_TO_TAKE_VEHICLE']  = "Press %s to drive your vehicle",
     ['PRESS_TO_STOP_ENGINE']   = "Press %s to stop the engine",
+    ['PRESS_TO_PAY_PARK_FEE']  = "Press %s to pay ~g~$%s~s~ for parking fees",
     ['IMPOUND_INVALID_ARGS']   = "Invalid args, use /impound <plate>",
     ['NOT_ALLOWED_PERMISSION'] = "You have no permission to use this command",
     ['KEY_ENGINE_CONTROL']     = "Use to control engine on/off",
@@ -22,5 +23,6 @@ Locales['en'] = {
     ['VEHICLE_PAID_SUCCESS']   = "You paid ~g~$%d~s~ and you can drive your vehicle now",
     ['IMPOUND_SUCCESS']        = "The car has impounded successfully",
     ['STOP_ENGINE_FIRST']      = "You have to stop the engine first",
-    ['VEHICLE_INFO']           = "~r~%s~s~\n~y~Owner:~s~ %s~s~\n~g~Plate:~s~ %s"
+    ['VEHICLE_INFO']           = "~r~%s~s~\n~y~Owner:~s~ %s~s~\n~g~Plate:~s~ %s\n~b~Fees: ~s~$%s~s~",
+    ['VEHICLE_IS_MOVING']      = "You must stop your car before you save it",
 }
