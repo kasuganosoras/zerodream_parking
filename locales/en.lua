@@ -22,5 +22,6 @@ Locales['en'] = {
     ['VEHICLE_PAID_SUCCESS']   = "You paid ~g~$%d~s~ and you can drive your vehicle now",
     ['IMPOUND_SUCCESS']        = "The car has impounded successfully",
     ['STOP_ENGINE_FIRST']      = "You have to stop the engine first",
-    ['VEHICLE_INFO']           = "~r~%s~s~\n~y~Owner:~s~ %s~s~\n~g~Plate:~s~ %s"
+    ['VEHICLE_INFO']           = "~r~%s~s~\n~y~Owner:~s~ %s~s~\n~g~Plate:~s~ %s",
+    ['VEHICLE_IS_MOVING']      = "You must stop your car before you save it",
 }
