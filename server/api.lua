@@ -21,7 +21,7 @@ function GetPlayerNickname(player)
     -- For ESX
     if Config.framework == 'esx' then
         local xPlayer = _g.ESX.GetPlayerFromId(player)
-        return xPlayer.name
+        return (xPlayer and xPlayer.name) and xPlayer.name or GetPlayerName(player)
         -- or character name
         -- return string.format("%s %s", xPlayer.get('firstname'), xPlayer.get('lastname')
     end

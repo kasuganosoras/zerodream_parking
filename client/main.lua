@@ -262,10 +262,12 @@ end)
 
 AddEventHandler('onResourceStop', function(resource)
     if resource == GetCurrentResourceName() then
-        for _, vehicles in pairs(_g.parkingVehicles) do
-            for _, vehicle in pairs(vehicles) do
-                if vehicle.entity then
-                    DeleteEntity(vehicle.entity)
+        if _g.parkingVehicles then
+            for _, vehicles in pairs(_g.parkingVehicles) do
+                for _, vehicle in pairs(vehicles) do
+                    if vehicle.entity then
+                        DeleteEntity(vehicle.entity)
+                    end
                 end
             end
         end
