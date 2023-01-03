@@ -4,10 +4,10 @@ Config = {
     debug       = false,
 
     -- Locale (en / zh)
-    locale      = 'zh',
+    locale      = 'en',
 
     -- Which framework you are using, can be 'standalone' or 'esx'
-    framework   = 'esx',
+    framework   = 'standalone',
 
     -- Require stop the engine before parking car?
     stopEngine  = true,
