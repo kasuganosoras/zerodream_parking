@@ -299,7 +299,8 @@ Citizen.CreateThread(function()
     end
 
     if Config.framework == 'esx' then
-        
+        DebugPrint('Loading player data...')
+
         AddEventHandler('esx:onPlayerSpawn', function()
             TriggerServerCallback('zerodream_parking:getPlayerData', function(data)
                 _g.identifier = data.identifier
