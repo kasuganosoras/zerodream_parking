@@ -139,30 +139,33 @@ function ParkingVehicle()
         if IsPedInAnyVehicle(playerPed, false) then
             local vehicle = GetVehiclePedIsIn(playerPed, false)
             if DoesEntityExist(vehicle) and GetPedInVehicleSeat(vehicle, -1) == playerPed then
-                if not IsParkingVehicle(vehicle) then
-                    if not Config.stopEngine or not GetIsVehicleEngineRunning(vehicle) then
-                        TaskLeaveAnyVehicle(playerPed, 0, 0)
-                        Citizen.Wait(1800)
-                        local payload = {
-                            model     = GetEntityModel(vehicle),
-                            class     = GetVehicleClass(vehicle),
-                            plate     = GetVehicleNumberPlateText(vehicle),
-                            props     = GetVehicleProperties(vehicle),
-                            position  = GetEntityCoords(vehicle),
-                            rotation  = GetEntityRotation(vehicle, 2),
-                            data      = GetVehicleExtraData(vehicle),
-                            parking   = parkingName,
-                        }
-                        TriggerServerCallback('zerodream_parking:saveVehicle', function(result)
-                            SendNotification(result.message)
-                            if result.success then
-                                FreezeEntityPosition(vehicle, true)
-                                SetEntityCompletelyDisableCollision(vehicle, true, false)
-                                NetworkFadeOutEntity(vehicle, false, false)
-                                Wait(500)
-                                DeleteEntity(vehicle)
-                            end
-                        end, payload)
+                if not Config.stopEngine or not GetIsVehicleEngineRunning(vehicle) then
+                        if GetEntitySpeed(vehicle) < 1 then
+                            TaskLeaveAnyVehicle(playerPed, 0, 0)
+                            Citizen.Wait(1800)
+                            local payload = {
+                                model     = GetEntityModel(vehicle),
+                                class     = GetVehicleClass(vehicle),
+                                plate     = GetVehicleNumberPlateText(vehicle),
+                                props     = GetVehicleProperties(vehicle),
+                                position  = GetEntityCoords(vehicle),
+                                rotation  = GetEntityRotation(vehicle, 2),
+                                data      = GetVehicleExtraData(vehicle),
+                                parking   = parkingName,
+                            }
+                            TriggerServerCallback('zerodream_parking:saveVehicle', function(result)
+                                SendNotification(result.message)
+                                if result.success then
+                                    FreezeEntityPosition(vehicle, true)
+                                    SetEntityCompletelyDisableCollision(vehicle, true, false)
+                                    NetworkFadeOutEntity(vehicle, false, false)
+                                    Wait(500)
+                                    DeleteEntity(vehicle)
+                                end
+                            end, payload)
+                        else
+                            SendNotification(_U('VEHICLE_IS_MOVING'))
+                        end
                     else
                         SendNotification(_U('STOP_ENGINE_FIRST'))
                     end
