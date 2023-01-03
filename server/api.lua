@@ -238,7 +238,7 @@ end
 function IsAllowedDrive(player, parking, plate)
     -- For Standalone
     return {
-        allowed = false,
-        message = 'test'
+        allowed = true,
+        message = ''
     }
 end
