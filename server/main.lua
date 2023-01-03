@@ -14,7 +14,7 @@ if Config.impound.command then
         local _source = source
         local job     = GetPlayerJob(_source)
         if IsInTable(Config.impound.job, job) then
-            local plate = args[1]
+            local plate = table.concat(args, ' ')
             if plate then
                 ImpoundVehicle(_source, plate)
             else
