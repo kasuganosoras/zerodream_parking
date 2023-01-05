@@ -228,8 +228,12 @@ function ParkingVehicle()
                 PlayKeyAnim(closeVeh)
                 QuickVehicleHorn(closeVeh, 2)
                 ParkingAction(parkingName, closeVeh)
+            else
+                _g.requestPending = false
             end
         end
+    else
+        _g.requestPending = false
     end
 end
 
