@@ -1,0 +1,28 @@
+Locales = Locales or {}
+
+Locales['es'] = {
+    ['PRESS_TO_SAVE_VEHICLE']  = "Pulsa %s para estacionar su vehículo",
+    ['PRESS_TO_TAKE_VEHICLE']  = "Pulsa %s para conducir su vehículo",
+    ['PRESS_TO_STOP_ENGINE']   = "Pulsa %s para parar el motor",
+    ['PRESS_TO_PAY_PARK_FEE']  = "Pulsa %s para pagar ~g~$%s~s~ la tarifa de estacionamiento",
+    ['IMPOUND_INVALID_ARGS']   = "Argumentos inválidos, usa /impound <matrícula>",
+    ['NOT_ALLOWED_PERMISSION'] = "No tienes permiso para usar este comando",
+    ['KEY_ENGINE_CONTROL']     = "Utilícelo para controlar el encendido/apagado del motor",
+    ['KEY_PARKING_VEHICLES']   = "Utilícelo para estacionar tu vehículo",
+    ['NOT_IN_DRIVER_SEAT']     = "Tienes que sentarte en el asiento del conductor para hacer esto",
+    ['VEHICLE_ALREADY_PARKED'] = "Un vehículo con la misma matrícula ya está estacionado",
+    ['VEHICLE_PARKED_SUCCESS'] = "Tu vehículo se ha estacionado exitosamente",
+    ['FIND_VEHICLE_INVALID']   = "Argumentos inválidos, use /findveh <matrícula>",
+    ['VEHICLE_NOT_FOUND']      = "No se puede encontrar este vehículo",
+    ['VEHICLE_FOUND']          = "Se ha marcado en su gps la posición de su vehículo",
+    ['VEHICLE_NOT_ALLOWED']    = "No puede estacionar este vehículo aquí",
+    ['VEHICLE_NOT_OWNED']      = "Usted no es el propietario de este coche",
+    ['ERROR_PARKING_FULL']     = "No se puede estacionar aquí porque hay demasiados vehículos",
+    ['NOT_ENOUGH_MONEY']       = "No tienes suficiente dinero para pagar el estacionamiento, tienes que pagar $%s",
+    ['VEHICLE_TAKE_SUCCESS']   = "Ya puede conducir su vehículo",
+    ['VEHICLE_PAID_SUCCESS']   = "Usted has pagado ~g~$%d~s~ y ya puede conducir su vehículo",
+    ['IMPOUND_SUCCESS']        = "El coche ha sido incautado con éxito",
+    ['STOP_ENGINE_FIRST']      = "Primero tienes que parar el motor.",
+    ['VEHICLE_INFO']           = "~r~%s~s~\n~y~Dueño:~s~ %s~s~\n~g~Matrícula:~s~ %s\n~b~Tarifa: ~s~$%s~s~",
+    ['VEHICLE_IS_MOVING']      = "Debe detener su coche antes de estacionarlo",
+}
