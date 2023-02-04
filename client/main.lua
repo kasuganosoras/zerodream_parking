@@ -313,6 +313,15 @@ Citizen.CreateThread(function()
     -- If using ESX framework, wait for ESX to be ready
     if Config.framework == 'esx' then
         DebugPrint('Waiting for ESX load...')
+        _g.ESX = nil
+        while _g.ESX == nil do
+            TriggerEvent('esx:getSharedObject', function(obj) _g.ESX = obj end)
+            Citizen.Wait(0)
+        end
+    end
+        
+    if Config.framework == 'esx1.9' then
+        DebugPrint('Waiting for ESX load...')
         _g.ESX = exports["es_extended"]:getSharedObject()
     end
 
