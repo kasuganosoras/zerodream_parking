@@ -3,10 +3,7 @@ _g = {
 }
 
 if Config.framework == 'esx' then
-    _g.ESX = nil
-    while _g.ESX == nil do
-        TriggerEvent('esx:getSharedObject', function(obj) _g.ESX = obj end)
-    end
+    _g.ESX = exports["es_extended"]:getSharedObject()
 end
 
 if Config.impound.command then
