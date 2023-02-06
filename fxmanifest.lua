@@ -10,6 +10,7 @@ url         'https://www.zerodream.net/'
 shared_scripts {
     'config.lua',
     'locales/*.lua',
+    '@es_extended/imports.lua',
 }
 
 client_scripts {
