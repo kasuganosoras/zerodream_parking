@@ -9,6 +9,10 @@ if Config.framework == 'esx' then
     end
 end
 
+if Config.framework == 'esx1.9' then
+    _g.ESX = exports["es_extended"]:getSharedObject()
+end
+
 if Config.impound.command then
     RegisterCommand(Config.impound.command, function(source, args, rawCommand)
         local _source = source

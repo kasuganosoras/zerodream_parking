@@ -20,7 +20,7 @@ function InitCommands()
 
     if Config.commands.findVehicle then
         RegisterCommand(Config.commands.findVehicle, function(source, args, rawCommand)
-            local plate = args[1]
+            local plate = table.concat(args, ' ')
             if plate then
                 FindVehicle(plate)
             else
@@ -314,12 +314,15 @@ Citizen.CreateThread(function()
     if Config.framework == 'esx' then
         DebugPrint('Waiting for ESX load...')
         _g.ESX = nil
-        Citizen.CreateThread(function()
-            while _g.ESX == nil do
-                TriggerEvent('esx:getSharedObject', function(obj) _g.ESX = obj end)
-                Citizen.Wait(0)
-            end
-        end)
+        while _g.ESX == nil do
+            TriggerEvent('esx:getSharedObject', function(obj) _g.ESX = obj end)
+            Citizen.Wait(0)
+        end
+    end
+        
+    if Config.framework == 'esx1.9' then
+        DebugPrint('Waiting for ESX load...')
+        _g.ESX = exports["es_extended"]:getSharedObject()
     end
 
     -- Wait for the game to be ready

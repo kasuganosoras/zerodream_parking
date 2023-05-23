@@ -219,6 +219,7 @@ function GetVehicleProperties(vehicle)
 		color1            = color1,
 		color2            = color2,
 		livery            = GetVehicleLivery(vehicle),
+		fuelLevel         = GetVehicleFuelLevel(vehicle),
 		bodyHealth        = GetVehicleBodyHealth(vehicle),
 		engineHealth      = GetVehicleEngineHealth(vehicle),
 		tankHealth        = GetVehiclePetrolTankHealth(vehicle),
@@ -596,6 +597,12 @@ function SetVehicleProperties(vehicle, props)
 			end
 		end
 	end
+	if props.fuelLevel then 
+		SetVehicleFuelLevel(vehicle, props.fuelLevel + 0.0) 
+		if DecorGetFloat(vehicle,'_FUEL_LEVEL') then 
+			DecorSetFloat(vehicle,'_FUEL_LEVEL',props.fuelLevel + 0.0) 
+		end 
+	end	
 end
 
 function GetVehicleDamageData(vehicle)
