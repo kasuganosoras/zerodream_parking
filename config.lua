@@ -6,7 +6,7 @@ Config = {
     -- Locale (en / zh)
     locale      = 'en',
 
-    -- Which framework you are using, can be 'standalone', 'esx' or 'esx1.9'
+    -- Which framework you are using, can be 'standalone', 'esx', 'esx1.9' or 'qbcore'
     framework   = 'standalone',
 
     -- Require stop the engine before parking car?
