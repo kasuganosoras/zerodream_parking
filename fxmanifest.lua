@@ -4,8 +4,8 @@ games       { 'gta5' }
 name        'zerodream_parking'
 author      'Akkariin'
 description 'ZeroDream Parking Script'
-version     '1.0.1'
-url         'https://www.zerodream.net/'
+version     '1.0.2'
+url         'https://github.com/kasuganosoras/zerodream_parking'
 
 shared_scripts {
     'config.lua',
