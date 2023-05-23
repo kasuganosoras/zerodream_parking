@@ -22,7 +22,7 @@ end
 
 -- Check is game ready
 function IsGameReady()
-    return NetworkIsSessionStarted() and DoesEntityExist(GetPlayerPed(-1))
+    return NetworkIsSessionStarted() and DoesEntityExist(GetPlayerPed(-1)) and NetworkIsPlayerActive(PlayerId())
 end
 
 function DateToTimestamp(y, m, d, h, i, s)

@@ -5,9 +5,15 @@
 -- Return: string
 function GetPlayerJob(player)
     -- For ESX
-    if Config.framework == 'esx' then
+    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
         local xPlayer = _g.ESX.GetPlayerFromId(player)
         return xPlayer.job.name
+    end
+
+    -- For QBCore
+    if Config.framework == 'qbcore' then
+        local player = _g.QBCore.Functions.GetPlayer(player)
+        return player.PlayerData.job.name
     end
 
     -- For Standalone
@@ -17,17 +23,23 @@ end
 -- Get player nickname
 -- Args: (number) player
 -- Return: string
-function GetPlayerNickname(player)
+function GetPlayerNickname(source)
     -- For ESX
-    if Config.framework == 'esx' then
-        local xPlayer = _g.ESX.GetPlayerFromId(player)
-        return (xPlayer and xPlayer.name) and xPlayer.name or GetPlayerName(player)
+    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
+        local xPlayer = _g.ESX.GetPlayerFromId(source)
+        return (xPlayer and xPlayer.name) and xPlayer.name or GetPlayerName(source)
         -- or character name
         -- return string.format("%s %s", xPlayer.get('firstname'), xPlayer.get('lastname')
     end
 
+    -- For QBCore
+    if Config.framework == 'qbcore' then
+        local player = _g.QBCore.Functions.GetPlayer(source)
+        return player and player.PlayerData.name or GetPlayerName(source)
+    end
+
     -- For Standalone
-    return GetPlayerName(player)
+    return GetPlayerName(source)
 end
 
 -- Get player money
@@ -35,9 +47,15 @@ end
 -- Return: number
 function GetPlayerMoney(player)
     -- For ESX
-    if Config.framework == 'esx' then
+    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
         local xPlayer = _g.ESX.GetPlayerFromId(player)
         return xPlayer.getMoney()
+    end
+
+    -- For QBCore
+    if Config.framework == 'qbcore' then
+        local player = _g.QBCore.Functions.GetPlayer(player)
+        return player.PlayerData.money['cash']
     end
 
     -- For Standalone
@@ -48,9 +66,16 @@ end
 -- Args: (number) player, (number) amount
 function RemovePlayerMoney(player, amount)
     -- For ESX
-    if Config.framework == 'esx' then
+    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
         local xPlayer = _g.ESX.GetPlayerFromId(player)
         xPlayer.removeMoney(amount)
+        return
+    end
+
+    -- For QBCore
+    if Config.framework == 'qbcore' then
+        local player = _g.QBCore.Functions.GetPlayer(player)
+        player.Functions.RemoveMoney('cash', amount)
         return
     end
 
@@ -63,9 +88,18 @@ end
 -- Return: boolean
 function IsPlayerHaveParkingCard(player)
     -- For ESX
-    if Config.framework == 'esx' then
+    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
         local xPlayer = _g.ESX.GetPlayerFromId(player)
         return xPlayer.getInventoryItem(Config.parkingCard).count > 0
+    end
+
+    -- For QBCore
+    if Config.framework == 'qbcore' then
+        local player = _g.QBCore.Functions.GetPlayer(player)
+        if player and player.PlayerData then
+            local item = player.Functions.GetItemByName(Config.parkingCard)
+            return item and item.amount > 0
+        end
     end
 
     -- For Standalone
@@ -77,11 +111,16 @@ end
 -- Return: string
 function GetIdentifierById(player)
     -- For ESX
-    if Config.framework == 'esx' then
+    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
         local xPlayer = _g.ESX.GetPlayerFromId(player)
         if xPlayer and xPlayer.identifier then
             return xPlayer.identifier
         end
+    end
+
+    -- For QBCore
+    if Config.framework == 'qbcore' then
+        return _g.QBCore.Functions.GetIdentifier(player, 'license')
     end
 
     -- For Standalone
@@ -141,10 +180,19 @@ end
 -- Return: boolean
 function IsOwnedVehicle(player, plate)
     -- For ESX
-    if Config.framework == 'esx' then
+    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
         local result = MySQL.Sync.fetchAll('SELECT * FROM owned_vehicles WHERE owner = @owner AND plate = @plate', {
             ['@owner'] = GetIdentifierById(player),
             ['@plate'] = plate
+        })
+        return type(result) == 'table' and result[1] ~= nil
+    end
+
+    -- For QBCore
+    if Config.framework == 'qbcore' then
+        local result = MySQL.Sync.fetchAll('SELECT * FROM player_vehicles WHERE plate = @plate AND citizenid = @citizenid', {
+            ['@plate']     = plate,
+            ['@citizenid'] = GetIdentifierById(player)
         })
         return type(result) == 'table' and result[1] ~= nil
     end
@@ -157,8 +205,14 @@ end
 -- Args: (number) player, (string) message
 function SendNotification(player, message)
     -- For ESX
-    if Config.framework == 'esx' then
+    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
         TriggerClientEvent('esx:showNotification', player, message)
+        return
+    end
+
+    -- For QBCore
+    if Config.framework == 'qbcore' then
+        TriggerClientEvent('QBCore:Notify', player, message)
         return
     end
 
@@ -174,11 +228,21 @@ end
 -- Args: (number) player, (string) parking, (string) plate
 function OnVehicleStored(player, parking, plate)
     -- For ESX
-    if Config.framework == 'esx' then
+    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
         MySQL.Async.execute('UPDATE owned_vehicles SET stored = @stored WHERE owner = @owner AND plate = @plate', {
             ['@stored'] = 1,
             ['@owner']  = GetIdentifierById(player),
             ['@plate']  = plate
+        })
+        return
+    end
+
+    -- For QBCore
+    if Config.framework == 'qbcore' then
+        MySQL.Async.execute('UPDATE player_vehicles SET state = @state WHERE citizenid = @citizenid AND plate = @plate', {
+            ['@state']     = 1,
+            ['@citizenid'] = GetIdentifierById(player),
+            ['@plate']     = plate
         })
         return
     end
@@ -191,11 +255,21 @@ end
 -- Args: (number) player, (string) parking, (string) plate
 function OnVehicleDrive(player, parking, plate)
     -- For ESX
-    if Config.framework == 'esx' then
+    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
         MySQL.Async.execute('UPDATE owned_vehicles SET stored = @stored WHERE owner = @owner AND plate = @plate', {
             ['@stored'] = 0,
             ['@owner']  = GetIdentifierById(player),
             ['@plate']  = plate
+        })
+        return
+    end
+
+    -- For QBCore
+    if Config.framework == 'qbcore' then
+        MySQL.Async.execute('UPDATE player_vehicles SET state = @state WHERE citizenid = @citizenid AND plate = @plate', {
+            ['@state']     = 0,
+            ['@citizenid'] = GetIdentifierById(player),
+            ['@plate']     = plate
         })
         return
     end
@@ -208,11 +282,21 @@ end
 -- Args: (number) player, (string) parking, (string) plate
 function OnVehicleImpounded(player, parking, plate)
     -- For ESX
-    if Config.framework == 'esx' then
+    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
         MySQL.Async.execute('UPDATE owned_vehicles SET stored = @stored WHERE owner = @owner AND plate = @plate', {
             ['@stored'] = 0,
             ['@owner']  = GetIdentifierById(player),
             ['@plate']  = plate
+        })
+        return
+    end
+
+    -- For QBCore
+    if Config.framework == 'qbcore' then
+        MySQL.Async.execute('UPDATE player_vehicles SET state = @state WHERE citizenid = @citizenid AND plate = @plate', {
+            ['@state']     = 0,
+            ['@citizenid'] = GetIdentifierById(player),
+            ['@plate']     = plate
         })
         return
     end

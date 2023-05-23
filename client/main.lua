@@ -290,6 +290,10 @@ AddEventHandler('zerodream_parking:syncDamage', function(vehicle, damageData)
     end
 end)
 
+RegisterNetEvent('QBCore:Client:UpdateObject', function()
+	_g.QBCore = exports['qb-core']:GetCoreObject()
+end)
+
 AddEventHandler('onResourceStop', function(resource)
     if resource == GetCurrentResourceName() then
         if _g.parkingVehicles then
@@ -323,6 +327,14 @@ Citizen.CreateThread(function()
     if Config.framework == 'esx1.9' then
         DebugPrint('Waiting for ESX load...')
         _g.ESX = exports["es_extended"]:getSharedObject()
+    end
+
+    if Config.framework == 'qbcore' then
+        DebugPrint('Waiting for QBCore load...')
+        _g.QBCore = exports['qb-core']:GetCoreObject()
+        while not _g.QBCore.Functions.GetPlayerData() do
+            Wait(10)
+        end
     end
 
     -- Wait for the game to be ready

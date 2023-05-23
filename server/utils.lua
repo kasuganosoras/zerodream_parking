@@ -51,27 +51,42 @@ function CheckDatabase()
     end
 
     -- Check if parking card exists
-    if Config.framework == 'esx' then
+    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
         local result = MySQL.Sync.fetchAll('SELECT * FROM `items` WHERE `name` = @name', {
             ['@name'] = Config.parkingCard
         })
         if type(result) ~= 'table' or result[1] == nil then
             if IsUsingItemLimit() then
                 MySQL.Sync.execute('INSERT INTO `items` (`name`, `label`, `limit`) VALUES (@name, @label, @limit)', {
-                    ['@name'] = Config.parkingCard,
+                    ['@name']  = Config.parkingCard,
                     ['@label'] = 'Parking Card',
                     ['@limit'] = 1,
                 })
             else
                 MySQL.Sync.execute('INSERT INTO `items` (`name`, `label`, `weight`) VALUES (@name, @label, @weight)', {
-                    ['@name'] = Config.parkingCard,
-                    ['@label'] = 'Parking Card',
+                    ['@name']   = Config.parkingCard,
+                    ['@label']  = 'Parking Card',
                     ['@weight'] = 0,
                 })
             end
             -- Reboot server to take effect
             print("^1Parking Card has been added to the database, you should restart your server to take effect!^0")
         end
+    end
+
+    if Config.framework == 'qbcore' then
+        exports['qb-core']:AddItem(Config.parkingCard, {
+            name        = Config.parkingCard,
+            label       = 'Parking Card',
+            weight      = 10,
+            type        = 'item',
+            image       = 'parking_card.png',
+            unique      = true,
+            useable     = false,
+            shouldClose = false,
+            combinable  = nil,
+            description = 'Allow you park your vehicle for free',
+        })
     end
 end
 

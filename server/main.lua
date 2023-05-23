@@ -13,6 +13,10 @@ if Config.framework == 'esx1.9' then
     _g.ESX = exports["es_extended"]:getSharedObject()
 end
 
+if Config.framework == 'qbcore' then
+    _g.QBCore = exports['qb-core']:GetCoreObject()
+end
+
 if Config.impound.command then
     RegisterCommand(Config.impound.command, function(source, args, rawCommand)
         local _source = source
@@ -55,6 +59,12 @@ function ImpoundVehicle(player, plate)
                 ['@plate']  = plate
             })
         end
+        if Config.framework == 'qbcore' then
+            MySQL.Sync.execute('UPDATE player_vehicles SET state = @state WHERE plate = @plate', {
+                ['@state'] = '0',
+                ['@plate'] = plate
+            })
+        end
         MySQL.Sync.execute('DELETE FROM parking_vehicles WHERE plate = @plate', {
             ['@plate'] = plate
         })
@@ -68,23 +78,32 @@ end
 
 RegisterServerCallback('zerodream_parking:getPlayerData', function(source, cb)
     local _source = source
-    if Config.framework == 'esx' then
+    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
         local xPlayer = _g.ESX.GetPlayerFromId(_source)
         cb({ identifier = xPlayer.identifier })
         return
     end
+    if Config.framework == 'qbcore' then
+        local identifier = _g.QBCore.Functions.GetIdentifier(_source, 'license')
+        cb({ identifier = identifier })
+        return
+    end
     cb({ identifier = GetIdentifierById(source) })
+end)
+
+RegisterNetEvent('QBCore:Server:UpdateObject', function()
+	if source ~= '' then return false end
+	_g.QBCore = exports['qb-core']:GetCoreObject()
 end)
 
 RegisterServerEvent('zerodream_parking:ready')
 AddEventHandler('zerodream_parking:ready', function()
     local _source  = source
     local vehicles = {}
-    local result   = MySQL.Sync.fetchAll('SELECT * FROM parking_vehicles', {
-        ['@identifier'] = GetIdentifierById(_source)
-    })
+    DebugPrint(string.format("Player %s is ready", _source))
+    local result   = MySQL.Sync.fetchAll('SELECT * FROM parking_vehicles', {})
     if type(result) == 'table' and result[1] ~= nil then
-        DebugPrint("Sending data to " .. GetPlayerNickname(_source))
+        DebugPrint(string.format("Sending data to %s", GetPlayerNickname(_source)))
         for k, v in pairs(result) do
             local posData = json.decode(v.position)
             if vehicles[v.parking] == nil then

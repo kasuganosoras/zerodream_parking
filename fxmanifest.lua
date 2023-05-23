@@ -21,6 +21,7 @@ client_scripts {
 
 server_scripts {
     '@mysql-async/lib/MySQL.lua',
+    '@oxmysql/lib/MySQL.lua',
     'server/utils.lua',
     'server/api.lua',
     'server/main.lua',

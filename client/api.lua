@@ -23,8 +23,14 @@ end
 -- Args: (string) message
 function SendNotification(message)
     -- For ESX
-    if Config.framework == 'esx' then
+    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
         _g.ESX.ShowNotification(message)
+        return
+    end
+
+    -- For QBCore
+    if Config.framework == 'qbcore' then
+        _g.QBCore.Functions.Notify(message, 'primary')
         return
     end
 
