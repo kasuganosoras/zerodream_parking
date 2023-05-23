@@ -24,7 +24,7 @@ This script is using `RegisterKeyMapping`, when you run the script, the key bind
 
 ## Requirements
 
-- [mysql-async](https://github.com/brouznouf/fivem-mysql-async)
+- [mysql-async](https://github.com/brouznouf/fivem-mysql-async) (or oxmysql)
 - [esx_vehicleshop](https://github.com/bathorus/esx_vehicleshop) (optional)
 
 ## Download & Installation
@@ -72,8 +72,8 @@ Config = {
     -- Locale (en / zh)
     locale      = 'en',
 
-    -- Which framework you are using, can be 'standalone' or 'esx'
-    framework   = 'esx',
+    -- Which framework you are using, can be 'standalone', 'esx', 'esx1.9' or 'qbcore'
+    framework   = 'standalone',
 
     -- Require stop the engine before parking car?
     stopEngine  = true,
