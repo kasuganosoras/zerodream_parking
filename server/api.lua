@@ -203,25 +203,30 @@ end
 
 -- Send notification to player
 -- Args: (number) player, (string) message
+-- Return: string
 function SendNotification(player, message)
-    -- For ESX
-    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
-        TriggerClientEvent('esx:showNotification', player, message)
-        return
-    end
+    -- Only send notification to player, ignore console
+    if player ~= 0 then
+        -- For ESX
+        if Config.framework == 'esx' or Config.framework == 'esx1.9' then
+            TriggerClientEvent('esx:showNotification', player, message)
+            return
+        end
 
-    -- For QBCore
-    if Config.framework == 'qbcore' then
-        TriggerClientEvent('QBCore:Notify', player, message)
-        return
-    end
+        -- For QBCore
+        if Config.framework == 'qbcore' then
+            TriggerClientEvent('QBCore:Notify', player, message)
+            return
+        end
 
-    -- For Standalone
-    TriggerClientEvent('chat:addMessage', player, {
-        color     = { 255, 255, 255},
-        multiline = true,
-        args      = { message }
-    })
+        -- For Standalone
+        TriggerClientEvent('chat:addMessage', player, {
+            color     = { 255, 255, 255},
+            multiline = true,
+            args      = { message }
+        })
+    end
+    return message
 end
 
 -- On vehicle stored

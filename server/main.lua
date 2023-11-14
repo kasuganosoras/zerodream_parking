@@ -18,20 +18,43 @@ if Config.framework == 'qbcore' then
 end
 
 if Config.impound.command then
-    RegisterCommand(Config.impound.command, function(source, args, rawCommand)
-        local _source = source
-        local job     = GetPlayerJob(_source)
-        if IsInTable(Config.impound.job, job) then
-            local plate = table.concat(args, ' ')
-            if plate then
-                ImpoundVehicle(_source, plate)
+    if Config.framework ~= 'standalone' then
+        RegisterCommand(Config.impound.command, function(source, args, rawCommand)
+            local _source = source
+            if _source == 0 then
+                local plate = table.concat(args, ' ')
+                if plate then
+                    local result = ImpoundVehicle(_source, GetCleanPlateNumber(plate))
+                    print(result)
+                else
+                    print(_U('IMPOUND_INVALID_ARGS'))
+                end
             else
-                SendNotification(_source, _U('IMPOUND_INVALID_ARGS'))
+                local job = GetPlayerJob(_source)
+                if IsInTable(Config.impound.job, job) then
+                    local plate = table.concat(args, ' ')
+                    if plate then
+                        ImpoundVehicle(_source, GetCleanPlateNumber(plate))
+                    else
+                        SendNotification(_source, _U('IMPOUND_INVALID_ARGS'))
+                    end
+                else
+                    SendNotification(_source, _U('NOT_ALLOWED_PERMISSION'))
+                end
             end
-        else
-            SendNotification(_source, _U('NOT_ALLOWED_PERMISSION'))
-        end
-    end, false)
+        end, false)
+    else
+        RegisterCommand(Config.impound.command, function(source, args, rawCommand)
+            local _source = source
+            local plate   = GetCleanPlateNumber(table.concat(args, ' '))
+            local result  = plate ~= "" and ImpoundVehicle(_source, plate) or _U('IMPOUND_INVALID_ARGS')
+            if _source == 0 then
+                print(result)
+            else
+                SendNotification(_source, result)
+            end
+        end, true)
+    end
 end
 
 function RegisterServerCallback(name, cb)
@@ -49,32 +72,53 @@ function RegisterServerCallback(name, cb)
 end
 
 function ImpoundVehicle(player, plate)
+    local _plate = GetCleanPlateNumber(plate)
     local result = MySQL.Sync.fetchAll('SELECT * FROM parking_vehicles WHERE plate = @plate', {
-        ['@plate'] = plate
+        ['@plate'] = _plate
     })
     if type(result) == 'table' and result[1] ~= nil then
         if Config.framework == 'esx' then
             MySQL.Sync.execute('UPDATE owned_vehicles SET stored = @stored WHERE plate = @plate', {
                 ['@stored'] = '0',
-                ['@plate']  = plate
+                ['@plate']  = _plate
             })
         end
         if Config.framework == 'qbcore' then
             MySQL.Sync.execute('UPDATE player_vehicles SET state = @state WHERE plate = @plate', {
                 ['@state'] = '0',
-                ['@plate'] = plate
+                ['@plate'] = _plate
             })
         end
         MySQL.Sync.execute('DELETE FROM parking_vehicles WHERE plate = @plate', {
-            ['@plate'] = plate
+            ['@plate'] = _plate
         })
-        OnVehicleImpounded(player, result[1].parking, result[1].plate)
+        if player ~= 0 then
+            OnVehicleImpounded(player, result[1].parking, result[1].plate)
+        end
         TriggerClientEvent('zerodream_parking:removeParkingVehicle', -1, result[1].parking, result[1].plate)
-        SendNotification(player, _U('IMPOUND_SUCCESS'))
+        return SendNotification(player, _U('IMPOUND_SUCCESS'))
     else
-        SendNotification(player, _U('VEHICLE_NOT_FOUND'))
+        return SendNotification(player, _U('VEHICLE_NOT_FOUND'))
     end
 end
+
+RegisterServerCallback('zerodream_parking:impoundVehicle', function(source, cb, plate)
+    local _source = source
+    local job     = GetPlayerJob(_source)
+    if IsInTable(Config.impound.job, job) then
+        local _plate = GetCleanPlateNumber(plate)
+        local result = ImpoundVehicle(_source, _plate)
+        cb({
+            success = true,
+            message = _U('IMPOUND_SUCCESS'),
+        })
+    else
+        cb({
+            success = false,
+            message = _U('NOT_ALLOWED_PERMISSION'),
+        })
+    end
+end)
 
 RegisterServerCallback('zerodream_parking:getPlayerData', function(source, cb)
     local _source = source
@@ -132,11 +176,12 @@ end)
 
 RegisterServerCallback('zerodream_parking:findVehicle', function(source, cb, plate)
     local _source    = source
+    local _plate     = GetCleanPlateNumber(plate)
     local identifier = GetIdentifierById(_source)
-    DebugPrint("Searching for vehicle " .. plate .. " for " .. identifier)
+    DebugPrint("Searching for vehicle " .. _plate .. " for " .. identifier)
     local result = MySQL.Sync.fetchAll('SELECT * FROM parking_vehicles WHERE owner = @owner AND plate = @plate', {
         ['@owner'] = identifier,
-        ['@plate'] = plate
+        ['@plate'] = _plate
     })
     if type(result) == 'table' and result[1] ~= nil then
         local posData = json.decode(result[1].position)
@@ -158,7 +203,7 @@ end)
 
 RegisterServerCallback('zerodream_parking:saveVehicle', function(source, cb, payload)
     local _source = source
-    local plate   = payload.plate
+    local plate   = GetCleanPlateNumber(payload.plate)
     local checker = IsAllowedParking(_source, payload.parking, plate)
     if plate then
         local result  = MySQL.Sync.fetchAll('SELECT * FROM parking_vehicles WHERE plate = @plate', {
@@ -242,8 +287,9 @@ end)
 RegisterServerCallback('zerodream_parking:driveOutVehicle', function(source, cb, plate)
     local _source    = source
     local identifier = GetIdentifierById(_source)
+    local _plate     = GetCleanPlateNumber(plate)
     local result  = MySQL.Sync.fetchAll('SELECT * FROM parking_vehicles WHERE plate = @plate', {
-        ['@plate'] = plate
+        ['@plate'] = _plate
     })
     if type(result) == 'table' and result[1] ~= nil then
         if result[1].owner == identifier then
@@ -260,15 +306,15 @@ RegisterServerCallback('zerodream_parking:driveOutVehicle', function(source, cb,
                         RemovePlayerMoney(_source, parkingFee)
                     end
                     MySQL.Async.execute('DELETE FROM parking_vehicles WHERE plate = @plate', {
-                        ['@plate'] = plate,
+                        ['@plate'] = _plate,
                     }, function(rowsChanged)
-                        OnVehicleDrive(_source, result[1].parking, plate)
+                        OnVehicleDrive(_source, result[1].parking, _plate)
                         cb({
                             success = true,
                             message = parkingFee > 0 and _UF('VEHICLE_PAID_SUCCESS', parkingFee) or _U('VEHICLE_TAKE_SUCCESS'),
                         })
                         -- Notify all clients
-                        TriggerLatentClientEvent('zerodream_parking:removeParkingVehicle', -1, 1024000, result[1].parking, plate)
+                        TriggerLatentClientEvent('zerodream_parking:removeParkingVehicle', -1, 1024000, result[1].parking, _plate)
                     end)
                 else
                     cb({

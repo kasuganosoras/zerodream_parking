@@ -64,6 +64,10 @@ function GetCurrentParkingCar()
     return nil
 end
 
+function GetCleanPlateNumber(plate)
+    return plate and plate:gsub("%s+", "") or ""
+end
+
 function QuickVehicleHorn(vehicle, num)
     for i = 1, num do
         local timer = GetGameTimer()
@@ -159,7 +163,7 @@ function IsParkingVehicle(vehicle)
     if NetworkGetEntityIsNetworked(vehicle) then
         return false
     end
-    local vehiclePlate = GetVehicleNumberPlateText(vehicle)
+    local vehiclePlate = GetCleanPlateNumber(GetVehicleNumberPlateText(vehicle))
     if _g.parkingVehicles then
         for id, vehicles in pairs(_g.parkingVehicles) do
             for plate, data in pairs(vehicles) do
@@ -170,6 +174,23 @@ function IsParkingVehicle(vehicle)
         end
     end
     return false
+end
+
+function ImpoundVehicle(vehicle)
+	if not vehicle or not DoesEntityExist(vehicle) then
+		return false
+	end
+	if not IsParkingVehicle(vehicle) then
+		return false
+	end
+	local vehiclePlate  = GetCleanPlateNumber(GetVehicleNumberPlateText(vehicle))
+	local p             = promise.new()
+	local impoundResult = false
+	TriggerServerCallback('zerodream_parking:impoundVehicle', function(result)
+		DebugPrint('Impound result: ', result.message)
+		p:resolve(result.success)
+	end, vehiclePlate)
+	return Citizen.Await(p)
 end
 
 -- Get vehicle properties
@@ -597,12 +618,13 @@ function SetVehicleProperties(vehicle, props)
 			end
 		end
 	end
-	if props.fuelLevel then 
-		SetVehicleFuelLevel(vehicle, props.fuelLevel + 0.0) 
-		if DecorGetFloat(vehicle,'_FUEL_LEVEL') then 
-			DecorSetFloat(vehicle,'_FUEL_LEVEL',props.fuelLevel + 0.0) 
-		end 
-	end	
+
+	if props.fuelLevel then
+		SetVehicleFuelLevel(vehicle, tonumber(props.fuelLevel) + 0.0)
+		if DecorGetFloat(vehicle,'_FUEL_LEVEL') then
+			DecorSetFloat(vehicle,'_FUEL_LEVEL', tonumber(props.fuelLevel) + 0.0)
+		end
+	end
 end
 
 function GetVehicleDamageData(vehicle)

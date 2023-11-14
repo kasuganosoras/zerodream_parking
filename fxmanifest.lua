@@ -4,7 +4,7 @@ games       { 'gta5' }
 name        'zerodream_parking'
 author      'Akkariin'
 description 'ZeroDream Parking Script'
-version     '1.0.2'
+version     '1.0.3'
 url         'https://github.com/kasuganosoras/zerodream_parking'
 
 shared_scripts {
@@ -25,4 +25,13 @@ server_scripts {
     'server/utils.lua',
     'server/api.lua',
     'server/main.lua',
+}
+
+exports {
+    'IsParkingVehicle',
+    'ImpoundVehicle',
+}
+
+server_exports {
+    'ImpoundVehicle',
 }

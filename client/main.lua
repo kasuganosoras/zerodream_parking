@@ -1,5 +1,6 @@
 _g = {
     clientCallbacks   = {},
+    parkingVehicles   = {},
     currentCallbackId = 0,
 }
 
@@ -46,9 +47,10 @@ function CreateParkingCar(payload)
         Citizen.Wait(0)
     end
     local vehicle = CreateVehicle(model, payload.position, 0.0, false, false)
+    SetEntityCoordsNoOffset(vehicle, payload.position)
     SetEntityRotation(vehicle, payload.rotation, 2, true)
     SetVehicleOnGroundProperly(vehicle)
-    if payload.owner ~= _g.identifier then
+    if Config.lockedCar or payload.owner ~= _g.identifier then
         SetVehicleDoorsLocked(vehicle, 2)
         SetVehicleDoorsLockedForAllPlayers(vehicle, true)
         SetVehicleUndriveable(vehicle, true)
@@ -157,13 +159,13 @@ function ParkingAction(parkingName, vehicle)
                     data      = GetVehicleExtraData(vehicle),
                     parking   = parkingName,
                 }
+                FreezeEntityPosition(vehicle, true)
                 TriggerServerCallback('zerodream_parking:saveVehicle', function(result)
                     _g.requestPending = false
                     SendNotification(result.message)
                     if result.success then
                         FreezeEntityPosition(vehicle, true)
                         SetEntityCompletelyDisableCollision(vehicle, true, false)
-                        NetworkFadeOutEntity(vehicle, false, false)
                         Wait(500)
                         if _g.parkingVehicles[parkingName] and _g.parkingVehicles[parkingName][payload.plate] then
                             local parkingTemp = _g.parkingVehicles[parkingName][payload.plate]
@@ -173,6 +175,8 @@ function ParkingAction(parkingName, vehicle)
                         end
                         Wait(100)
                         DeleteEntity(vehicle)
+                    else
+                        FreezeEntityPosition(vehicle, false)
                     end
                 end, payload)
             else
@@ -343,6 +347,14 @@ Citizen.CreateThread(function()
         Wait(0)
     end
 
+    -- Wait for the ESX to be ready
+    if Config.framework == 'esx' or Config.framework == 'esx1.9' then
+        DebugPrint('Waiting for ESX player data load...')
+        while not _g.ESX.GetPlayerData().identifier do
+            Wait(100)
+        end
+    end
+
     -- Load player data
     DebugPrint('Loading player data...')
     TriggerServerCallback('zerodream_parking:getPlayerData', function(data)
@@ -412,6 +424,8 @@ Citizen.CreateThread(function()
             local ownerName = _g.closeVehicle.name
             local parkFees  = GetParkingFeeByCar(_g.closeVehicle)
             AdvancedDrawText3D(position, _UF('VEHICLE_INFO', vehNames, ownerName, _g.closeVehicle.plate, parkFees))
+        else
+            Wait(500)
         end
     end
 end)

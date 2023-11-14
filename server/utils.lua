@@ -50,6 +50,9 @@ function CheckDatabase()
         })
     end
 
+    -- Set owner column size to 255
+    MySQL.Sync.execute('ALTER TABLE `parking_vehicles` CHANGE COLUMN `owner` `owner` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL;')
+
     -- Check if parking card exists
     if Config.framework == 'esx' or Config.framework == 'esx1.9' then
         local result = MySQL.Sync.fetchAll('SELECT * FROM `items` WHERE `name` = @name', {
@@ -88,6 +91,11 @@ function CheckDatabase()
             description = 'Allow you park your vehicle for free',
         })
     end
+end
+
+-- Get clean plate number
+function GetCleanPlateNumber(plate)
+    return plate and plate:gsub("%s+", "") or ""
 end
 
 -- Get parking fee
