@@ -27,7 +27,7 @@ This script is using `RegisterKeyMapping`, when you run the script, the key bind
 - [mysql-async](https://github.com/brouznouf/fivem-mysql-async) (or oxmysql)
 - [esx_vehicleshop](https://github.com/bathorus/esx_vehicleshop) (optional)
 
-## Download & Installation
+## Download
 
 #### Using Git
 
@@ -69,7 +69,7 @@ Config = {
     -- Debug mode
     debug       = false,
 
-    -- Locale (en / zh)
+    -- Locale (en / zh / es)
     locale      = 'en',
 
     -- Which framework you are using, can be 'standalone', 'esx', 'esx1.9' or 'qbcore'
@@ -80,6 +80,9 @@ Config = {
 
     -- Allow park not owned vehicles?
     notOwnedCar = true,
+
+    -- Locked car for everyone (included owner)?
+    lockedCar   = true,
 
     -- Parking card item name
     parkingCard = 'parkingcard',
@@ -147,7 +150,7 @@ Config = {
         -- Max cars can be parked on the map
         maxCars    = 100,
         -- Allow vehicle class, can be find here: https://docs.fivem.net/natives/?_0x29439776AAA00A62 (use -1 means all, use , to separate multiple types)
-        allowTypes = { 0, 1, 2, 3, 4, 5 }, -- if you want to allow all class, change to { -1 },
+        allowTypes = { -1 }, -- if you want to allow all class, change to { -1 },
         -- Render distance
         distance   = 50.0,
         -- Parking fee per day in real life time
